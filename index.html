@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DDPM & DDIM Audio Denoising Demo</title>
+    <title>DDPM & DDIM Speech Enhancement Demo</title>
     <style>
-        /* Modern CSS Reset & Theme Variables */
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
@@ -26,11 +25,7 @@
             text-align: center; 
         }
 
-        /* Header Section Style */
-        .header-container {
-            margin-bottom: 50px;
-        }
-
+        .header-container { margin-bottom: 50px; }
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
@@ -39,116 +34,39 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
 
-        p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* Premium Table Style */
         .table-container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             overflow-x: auto;
             background: var(--card-bg);
             border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-color);
         }
 
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            text-align: left;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 20px; border-bottom: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        th { background-color: #111827; color: var(--text-main); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease; }
 
-        th, td { 
-            padding: 20px; 
-            border-bottom: 1px solid var(--border-color); 
-            text-align: center;
-            vertical-align: middle;
-        }
+        .badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-easy { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-hard { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .env-title { display: block; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
 
-        th { 
-            background-color: #111827; 
-            color: var(--text-main);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.05em;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Hover effect on table rows */
-        tr:hover td {
-            background-color: rgba(255, 255, 255, 0.02);
-            transition: background-color 0.2s ease;
-        }
-
-        /* Badges for Environments */
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge-easy {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .badge-hard {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        /* Environment Title text */
-        .env-title {
-            display: block;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 6px;
-        }
-
-        /* Customizing the HTML5 Audio Player UI to fit the Dark Mode */
-        audio { 
-            width: 240px; 
-            height: 40px;
-            border-radius: 30px;
-            background: #0f172a;
-            outline: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        audio:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Footer styling */
-        footer {
-            margin-top: 60px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
+        audio { width: 230px; height: 40px; border-radius: 30px; background: #0f172a; outline: none; transition: transform 0.2s ease; }
+        audio:hover { transform: scale(1.02); }
+        footer { margin-top: 60px; color: var(--text-muted); font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
     <div class="header-container">
         <h1>DDPM & DDIM Speech Enhancement Demo</h1>
-        <p>Interactive showcase of generative audio denoising models evaluated under stationary and non-stationary noise conditions.</p>
+        <p>Interactive evaluation of generative audio denoising models across stationary and non-stationary environment profiles.</p>
     </div>
     
     <div class="table-container">
@@ -157,37 +75,53 @@
                 <tr>
                     <th>Environment Profile</th>
                     <th>Noisy Baseline</th>
-                    <th>Proposed DDPM <br><span style="color: var(--accent-blue); font-size: 0.75rem;">(50 Steps)</span></th>
-                    <th>Optimized DDIM <br><span style="color: var(--accent-purple); font-size: 0.75rem;">(3 Steps)</span></th>
+                    <th>Enhanced Speech <br><span style="color: var(--accent-blue); font-size: 0.75rem;">(DDPM / Optimized)</span></th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Row 1: Easy Noise -->
                 <tr>
                     <td>
                         <span class="env-title">White Noise</span>
-                        <span class="badge badge-easy">Easy Profile</span>
+                        <span class="badge badge-easy">Easy (Stationary)</span>
                     </td>
-                    <td><audio controls src="arabic_original.wav"></audio></td>
-                    <td><audio controls src="arabic_ddpm_50steps.wav"></audio></td>
-                    <td><audio controls src="arabic_ddim_3steps.wav"></audio></td>
+                    <td><audio controls src="White_noise_noisy.wav"></audio></td>
+                    <td><audio controls src="White_noise_denoised.wav"></audio></td>
                 </tr>
-                <!-- Row 2: Hard Noise (Ready for your pink noise samples when you want to add them) -->
                 <tr>
                     <td>
-                        <span class="env-title">Pink Noise</span>
-                        <span class="badge badge-hard">Hard Profile</span>
+                        <span class="env-title">Running Tap</span>
+                        <span class="badge badge-easy">Easy (Stationary)</span>
                     </td>
-                    <td><audio controls src="arabic_pink_original.wav"></audio></td>
-                    <td><audio controls src="arabic_pink_ddpm.wav"></audio></td>
-                    <td><audio controls src="arabic_pink_ddim.wav"></audio></td>
+                    <td><audio controls src="Running_tap_noisy.wav"></audio></td>
+                    <td><audio controls src="Running_tap_denoised.wav"></audio></td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="env-title">Dude Miaowing (SNR 0)</span>
+                        <span class="badge badge-hard">Hard (Non-Stationary)</span>
+                    </td>
+                    <td><audio controls src="5_dude_miaowing_snr0_noisy.wav"></audio></td>
+                    <td>
+                        <div style="margin-bottom: 5px;"><span style="font-size:0.75rem; color:var(--text-muted)">DDPM (50 Steps):</span></div>
+                        <audio controls src="ddpm_denoised (1).wav"></audio>
+                        <div style="margin-top: 8px; margin-bottom: 5px;"><span style="font-size:0.75rem; color:var(--text-muted)">DDIM (3 Steps / Fast):</span></div>
+                        <audio controls src="ddim_denoised (1).wav"></audio>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="env-title">Global Preview</span>
+                        <span class="badge badge-easy">General Test</span>
+                    </td>
+                    <td><audio controls src="input_noisy.wav"></audio></td>
+                    <td><audio controls src="output_denoised.wav"></audio></td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <footer>
-        Designed for Speech Enhancement Thesis Evaluation &copy; 2026
+        Speech Enhancement Evaluation Framework &copy; 2026
     </footer>
 
 </body>

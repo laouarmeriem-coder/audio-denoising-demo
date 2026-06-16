@@ -3,126 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DDPM & DDIM Speech Enhancement Demo</title>
+    <title>Audio Denoising Demo - DiffWave</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
-            --text-main: #f8fafc;
+            --accent-color: #10b981;
+            --text-color: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-purple: #8b5cf6;
-            --border-color: #334155;
         }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 40px 20px;
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            text-align: center; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
         }
 
-        .header-container { margin-bottom: 50px; }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            background: linear-gradient(to right, #4f46e5, #3b82f6, #10b981);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
-
-        .table-container {
-            max-width: 1100px;
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            overflow-x: auto;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
         }
 
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 20px; border-bottom: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
-        th { background-color: #111827; color: var(--text-main); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease; }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 20px;
+        }
 
-        .badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-        .badge-easy { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-hard { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .env-title { display: block; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+        header h1 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
 
-        audio { width: 230px; height: 40px; border-radius: 30px; background: #0f172a; outline: none; transition: transform 0.2s ease; }
-        audio:hover { transform: scale(1.02); }
-        footer { margin-top: 60px; color: var(--text-muted); font-size: 0.85rem; }
+        /* أزرار اختيار قاعدة البيانات */
+        .dataset-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid #334155;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        }
+
+        /* قسم عرض البطاقات الصوتية */
+        .audio-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .audio-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #ef4444; /* افتراضي حسب الـ SNR */
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .snr-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        /* صف مشغلات الصوت */
+        .audio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .audio-item {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .audio-item span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+        }
+
+        /* ألوان مخصصة لمستويات SNR */
+        .snr-neg5 { border-left-color: #ef4444; } /* أحمر للـ -5dB */
+        .snr-0 { border-left-color: #f59e0b; }   /* برتقالي للـ 0dB */
+        .snr-5 { border-left-color: #3b82f6; }   /* أزرق للـ 5dB */
+
+        .badge-neg5 { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .badge-0 { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-5 { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>DDPM & DDIM Speech Enhancement Demo</h1>
-        <p>Interactive evaluation of generative audio denoising models across stationary and non-stationary environment profiles.</p>
-    </div>
-    
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Environment Profile</th>
-                    <th>Noisy Baseline</th>
-                    <th>Enhanced Speech <br><span style="color: var(--accent-blue); font-size: 0.75rem;">(DDPM / Optimized)</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <span class="env-title">White Noise</span>
-                        <span class="badge badge-easy">Easy (Stationary)</span>
-                    </td>
-                    <td><audio controls src="White_noise_noisy.wav"></audio></td>
-                    <td><audio controls src="White_noise_denoised.wav"></audio></td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="env-title">Running Tap</span>
-                        <span class="badge badge-easy">Easy (Stationary)</span>
-                    </td>
-                    <td><audio controls src="Running_tap_noisy.wav"></audio></td>
-                    <td><audio controls src="Running_tap_denoised.wav"></audio></td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="env-title">Dude Miaowing (SNR 0)</span>
-                        <span class="badge badge-hard">Hard (Non-Stationary)</span>
-                    </td>
-                    <td><audio controls src="5_dude_miaowing_snr0_noisy.wav"></audio></td>
-                    <td>
-                        <div style="margin-bottom: 5px;"><span style="font-size:0.75rem; color:var(--text-muted)">DDPM (50 Steps):</span></div>
-                        <audio controls src="ddpm_denoised (1).wav"></audio>
-                        <div style="margin-top: 8px; margin-bottom: 5px;"><span style="font-size:0.75rem; color:var(--text-muted)">DDIM (3 Steps / Fast):</span></div>
-                        <audio controls src="ddim_denoised (1).wav"></audio>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="env-title">Global Preview</span>
-                        <span class="badge badge-easy">General Test</span>
-                    </td>
-                    <td><audio controls src="input_noisy.wav"></audio></td>
-                    <td><audio controls src="output_denoised.wav"></audio></td>
-                </tr>
-            </tbody>
-        </table>
+<div class="container">
+    <header>
+        <h1><i class="fa-solid fa-wave-square"></i> Audio Denoising Demonstration</h1>
+        <p>Generative Speech Enhancement using DDPM & DDIM Sampling on DiffWave Architecture</p>
+    </header>
+
+    <div class="dataset-tabs">
+        <button class="tab-btn active" onclick="switchDataset('Arabic')">Arabic Matrix</button>
+        <button class="tab-btn" onclick="switchDataset('SC09')">SC09 (Commands)</button>
+        <button class="tab-btn" onclick="switchDataset('LJSpeech')">LJSpeech (Sentences)</button>
     </div>
 
-    <footer>
-        Speech Enhancement Evaluation Framework &copy; 2026
-    </footer>
+    <div id="audioSection" class="audio-section"></div>
+</div>
+
+<script>
+    // هيكلة البيانات والمجلدات والمسارات بناءً على طلبك
+    const datasetStore = {
+        Arabic: [
+            {
+                title: "Exercise Bike Noise Scenario",
+                snr: "0 dB",
+                class: "snr-0",
+                badgeClass: "badge-0",
+                noisy: "audio/Arabic/clean_noisy/Arabic_noisy_003_exercise_bike_snr0.wav",
+                ddpm: "audio/Arabic/ddpm/Arabic_denoisy_003_exercise_bike_snr0ddpm.wav",
+                ddim: "audio/Arabic/ddim/Arabic_denoisy_003_walking_machine_snr0ddim.wav" // الملف المذكور بالطلب
+            },
+            {
+                title: "Cooking Kitchen Noise Scenario",
+                snr: "-5 dB",
+                class: "snr-neg5",
+                badgeClass: "badge-neg5",
+                noisy: "audio/Arabic/clean_noisy/Arabic_noisy_005_cooking_1_snr-5.wav",
+                ddpm: "audio/Arabic/ddpm/Arabic_denoisy_005_cooking_1_snr-5ddpm.wav",
+                ddim: "audio/Arabic/ddim/Arabic_denoisy_005_cooking_1_snr-5ddim.wav"
+            },
+            {
+                title: "Water Tap Flow Scenario",
+                snr: "5 dB",
+                class: "snr-5",
+                badgeClass: "badge-5",
+                noisy: "audio/Arabic/clean_noisy/Arabic_noisy_019_water_tap_snr5.wav",
+                ddpm: "audio/Arabic/ddpm/Arabic_denoisy_019_water_tap_snr5ddpm.wav",
+                ddim: "audio/Arabic/ddim/Arabic_denoisy_019_water_tap_snr5ddim.wav"
+            }
+        ],
+        SC09: [
+            {
+                title: "Command Recording - Cooking Background",
+                snr: "-5 dB",
+                class: "snr-neg5",
+                badgeClass: "badge-neg5",
+                noisy: "audio/SC09/clean_noisy/SC09_noisy_002_cooking_2_snr-5.wav",
+                ddpm: "audio/SC09/ddpm/SC09_denoisy_002_cooking_2_snr-5ddpm.wav",
+                ddim: "audio/SC09/ddim/SC09_denoisy_002_cooking_2_snr-5ddim.wav"
+            },
+            {
+                title: "Command Recording - Doing Dishes Background",
+                snr: "0 dB",
+                class: "snr-0",
+                badgeClass: "badge-0",
+                noisy: "audio/SC09/clean_noisy/SC09_noisy_005_doing_the_dishes_snr0.wav",
+                ddpm: "audio/SC09/ddpm/SC09_denoisy_005_doing_the_dishes_snr0ddpm.wav",
+                ddim: "audio/SC09/ddim/SC09_denoisy_005_doing_the_dishes_snr0ddim.wav"
+            },
+            {
+                title: "Command Recording - High Interference Dishes",
+                snr: "5 dB",
+                class: "snr-5",
+                badgeClass: "badge-5",
+                noisy: "audio/SC09/clean_noisy/SC09_noisy_019_doing_the_dishes_snr5.wav",
+                ddpm: "audio/SC09/ddpm/SC09_denoisy_019_doing_the_dishes_snr5ddpm.wav",
+                ddim: "audio/SC09/ddim/SC09_denoisy_019_doing_the_dishes_snr5ddim.wav"
+            }
+        ],
+        LJSpeech: [
+            {
+                title: "Long Sentence Speech - Cooking Background",
+                snr: "-5 dB",
+                class: "snr-neg5",
+                badgeClass: "badge-neg5",
+                noisy: "audio/LJSpeech/clean_noisy/LJSpeech_noisy_004_cooking_2_snr-5.wav",
+                ddpm: "audio/LJSpeech/ddpm/LJSpeech_denoisy_004_cooking_2_snr-5ddpm.wav",
+                ddim: "audio/LJSpeech/ddim/LJSpeech_denoisy_004_cooking_2_snr-5ddim.wav"
+            },
+            {
+                title: "Long Sentence Speech - Cooking Background",
+                snr: "0 dB",
+                class: "snr-0",
+                badgeClass: "badge-0",
+                noisy: "audio/LJSpeech/clean_noisy/LJSpeech_noisy_003_cooking_2_snr0.wav",
+                ddpm: "audio/LJSpeech/ddpm/LJSpeech_denoisy_003_cooking_2_snr0ddpm.wav",
+                ddim: "audio/LJSpeech/ddim/LJSpeech_denoisy_003_cooking_2_snr0ddim.wav"
+            },
+            {
+                title: "Long Sentence Speech - Cooking Background",
+                snr: "5 dB",
+                class: "snr-5",
+                badgeClass: "badge-5",
+                noisy: "audio/LJSpeech/clean_noisy/LJSpeech_noisy_010_cooking_2_snr5.wav",
+                ddpm: "audio/LJSpeech/ddpm/LJSpeech_denoisy_010_cooking_2_snr5ddpm.wav",
+                ddim: "audio/LJSpeech/ddim/LJSpeech_denoisy_010_cooking_2_snr5ddim.wav"
+            }
+        ]
+    };
+
+    function renderAudioCards(datasetName) {
+        const container = document.getElementById('audioSection');
+        container.innerHTML = ''; // تفريغ المحتوى القديم
+
+        const items = datasetStore[datasetName];
+        items.forEach(item => {
+            const cardHTML = `
+                <div class="audio-card ${item.class}">
+                    <div class="card-header">
+                        <h3>${item.title}</h3>
+                        <span class="snr-badge ${item.badgeClass}">SNR: ${item.snr}</span>
+                    </div>
+                    <div class="audio-grid">
+                        <div class="audio-item">
+                            <span><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Noisy Input</span>
+                            <audio controls src="${item.noisy}"></audio>
+                        </div>
+                        <div class="audio-item">
+                            <span><i class="fa-solid fa-wand-magic-sparkles" style="color: #10b981;"></i> Enhanced (DDPM)</span>
+                            <audio controls src="${item.ddpm}"></audio>
+                        </div>
+                        <div class="audio-item">
+                            <span><i class="fa-solid fa-bolt" style="color: #3b82f6;"></i> Enhanced (DDIM Fast)</span>
+                            <audio controls src="${item.ddim}"></audio>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += cardHTML;
+        });
+    }
+
+    function switchDataset(datasetName) {
+        // تحديث الأزرار النشطة النشطة
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // إعادة رندرة المقاطع الصوتية
+        renderAudioCards(datasetName);
+    }
+
+    // رندرة الداتا سيت الأول تلقائياً عند تحميل الموقع لأول مرة
+    window.onload = function() {
+        renderAudioCards('Arabic');
+    };
+</script>
 
 </body>
 </html>

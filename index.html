@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Denoising Demo - DiffWave</title>
+    <title>Audio Denoising Demo - DiffWave + Gradio</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -39,12 +39,33 @@
             margin-bottom: 10px;
         }
 
-        /* أزرار اختيار قاعدة البيانات */
+        header p {
+            color: var(--text-muted);
+        }
+
+        /* Iframe Gradio */
+        .gradio-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 40px;
+            border: 1px solid #334155;
+        }
+
+        .gradio-container iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 12px;
+        }
+
+        /* Dataset Tabs */
         .dataset-tabs {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -64,7 +85,7 @@
             box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
 
-        /* قسم عرض البطاقات الصوتية */
+        /* Audio Cards */
         .audio-section {
             display: grid;
             grid-template-columns: 1fr;
@@ -76,7 +97,7 @@
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid #ef4444; /* افتراضي حسب الـ SNR */
+            border-left: 5px solid #ef4444;
         }
 
         .card-header {
@@ -86,6 +107,8 @@
             margin-bottom: 15px;
             border-bottom: 1px solid #334155;
             padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .snr-badge {
@@ -95,7 +118,6 @@
             font-weight: bold;
         }
 
-        /* صف مشغلات الصوت */
         .audio-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -124,48 +146,128 @@
             height: 40px;
         }
 
-        /* ألوان مخصصة لمستويات SNR */
-        .snr-neg5 { border-left-color: #ef4444; } /* أحمر للـ -5dB */
-        .snr-0 { border-left-color: #f59e0b; }   /* برتقالي للـ 0dB */
-        .snr-5 { border-left-color: #3b82f6; }   /* أزرق للـ 5dB */
+        /* SNR Colors */
+        .snr-neg5 { border-left-color: #ef4444; }
+        .snr-0 { border-left-color: #f59e0b; }
+        .snr-5 { border-left-color: #3b82f6; }
 
         .badge-neg5 { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
         .badge-0 { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; }
         .badge-5 { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+
+        /* Upload Section */
+        .upload-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px dashed #334155;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            background: var(--accent-color);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .upload-label:hover {
+            background: #059669;
+            transform: scale(1.02);
+        }
+
+        .upload-status {
+            margin-top: 15px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 600px) {
+            .gradio-container iframe {
+                height: 600px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+
+    <!-- HEADER -->
     <header>
-        <h1><i class="fa-solid fa-wave-square"></i> Audio Denoising Demonstration</h1>
+        <h1><i class="fa-solid fa-wave-square"></i> Audio Denoising Demo</h1>
         <p>Generative Speech Enhancement using DDPM & DDIM Sampling on DiffWave Architecture</p>
     </header>
 
+    <!-- ========================================================= -->
+    <!-- GRADIO APP (Upload audio → Denoise → Test) -->
+    <!-- ========================================================= -->
+    <div class="gradio-container">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <span style="color: var(--accent-color); font-weight: bold;">
+                <i class="fa-solid fa-microphone"></i> Upload or Record Audio → Denoise → Test Recognition
+            </span>
+        </div>
+        <!-- L'iframe Gradio -->
+        <iframe src="https://laouarmeriem-coder.github.io/audio-denoising-demo/"></iframe>
+        <!-- OU utilisez le lien public Gradio si vous en avez un -->
+        <!-- <iframe src="https://votre-lien-gradio.gradio.live"></iframe> -->
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- UPLOAD SECTION (Alternative upload) -->
+    <!-- ========================================================= -->
+    <div class="upload-section">
+        <h3><i class="fa-solid fa-upload"></i> Upload Your Own Audio</h3>
+        <p style="color: var(--text-muted);">Upload a noisy audio file to test the denoising</p>
+        <label for="file-upload" class="upload-label">
+            <i class="fa-solid fa-cloud-upload-alt"></i> Choose Audio File
+        </label>
+        <input type="file" id="file-upload" accept=".wav,.mp3,.m4a,.flac">
+        <div class="upload-status" id="upload-status">No file selected</div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- DATASET TABS -->
+    <!-- ========================================================= -->
     <div class="dataset-tabs">
         <button class="tab-btn active" onclick="switchDataset('Arabic')">Arabic Matrix</button>
         <button class="tab-btn" onclick="switchDataset('SC09')">SC09 (Commands)</button>
         <button class="tab-btn" onclick="switchDataset('LJSpeech')">LJSpeech (Sentences)</button>
     </div>
 
+    <!-- ========================================================= -->
+    <!-- AUDIO CARDS -->
+    <!-- ========================================================= -->
     <div id="audioSection" class="audio-section"></div>
+
 </div>
 
 <script>
-    // هيكلة البيانات والمجلدات والمسارات بناءً على طلبك
+    // =============================================================
+    // DATA
+    // =============================================================
     const datasetStore = {
         Arabic: [
             {
-                title: "Exercise Bike Noise Scenario",
+                title: "Exercise Bike Noise",
                 snr: "0 dB",
                 class: "snr-0",
                 badgeClass: "badge-0",
                 noisy: "audio/Arabic/clean_noisy/Arabic_noisy_003_exercise_bike_snr0.wav",
                 ddpm: "audio/Arabic/ddpm/Arabic_denoisy_003_exercise_bike_snr0ddpm.wav",
-                ddim: "audio/Arabic/ddim/Arabic_denoisy_003_walking_machine_snr0ddim.wav" // الملف المذكور بالطلب
+                ddim: "audio/Arabic/ddim/Arabic_denoisy_003_walking_machine_snr0ddim.wav"
             },
             {
-                title: "Cooking Kitchen Noise Scenario",
+                title: "Cooking Noise",
                 snr: "-5 dB",
                 class: "snr-neg5",
                 badgeClass: "badge-neg5",
@@ -174,7 +276,7 @@
                 ddim: "audio/Arabic/ddim/Arabic_denoisy_005_cooking_1_snr-5ddim.wav"
             },
             {
-                title: "Water Tap Flow Scenario",
+                title: "Water Tap Flow",
                 snr: "5 dB",
                 class: "snr-5",
                 badgeClass: "badge-5",
@@ -185,7 +287,7 @@
         ],
         SC09: [
             {
-                title: "Command Recording - Cooking Background",
+                title: "Cooking Background",
                 snr: "-5 dB",
                 class: "snr-neg5",
                 badgeClass: "badge-neg5",
@@ -194,7 +296,7 @@
                 ddim: "audio/SC09/ddim/SC09_denoisy_002_cooking_2_snr-5ddim.wav"
             },
             {
-                title: "Command Recording - Doing Dishes Background",
+                title: "Doing Dishes",
                 snr: "0 dB",
                 class: "snr-0",
                 badgeClass: "badge-0",
@@ -203,7 +305,7 @@
                 ddim: "audio/SC09/ddim/SC09_denoisy_005_doing_the_dishes_snr0ddim.wav"
             },
             {
-                title: "Command Recording - High Interference Dishes",
+                title: "High Interference Dishes",
                 snr: "5 dB",
                 class: "snr-5",
                 badgeClass: "badge-5",
@@ -214,7 +316,7 @@
         ],
         LJSpeech: [
             {
-                title: "Long Sentence Speech - Cooking Background",
+                title: "Sentence - Cooking",
                 snr: "-5 dB",
                 class: "snr-neg5",
                 badgeClass: "badge-neg5",
@@ -223,7 +325,7 @@
                 ddim: "audio/LJSpeech/ddim/LJSpeech_denoisy_004_cooking_2_snr-5ddim.wav"
             },
             {
-                title: "Long Sentence Speech - Cooking Background",
+                title: "Sentence - Cooking",
                 snr: "0 dB",
                 class: "snr-0",
                 badgeClass: "badge-0",
@@ -232,7 +334,7 @@
                 ddim: "audio/LJSpeech/ddim/LJSpeech_denoisy_003_cooking_2_snr0ddim.wav"
             },
             {
-                title: "Long Sentence Speech - Cooking Background",
+                title: "Sentence - Cooking",
                 snr: "5 dB",
                 class: "snr-5",
                 badgeClass: "badge-5",
@@ -243,9 +345,12 @@
         ]
     };
 
+    // =============================================================
+    // RENDER
+    // =============================================================
     function renderAudioCards(datasetName) {
         const container = document.getElementById('audioSection');
-        container.innerHTML = ''; // تفريغ المحتوى القديم
+        container.innerHTML = '';
 
         const items = datasetStore[datasetName];
         items.forEach(item => {
@@ -276,16 +381,30 @@
     }
 
     function switchDataset(datasetName) {
-        // تحديث الأزرار النشطة النشطة
         const buttons = document.querySelectorAll('.tab-btn');
         buttons.forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
-
-        // إعادة رندرة المقاطع الصوتية
         renderAudioCards(datasetName);
     }
 
-    // رندرة الداتا سيت الأول تلقائياً عند تحميل الموقع لأول مرة
+    // =============================================================
+    // UPLOAD
+    // =============================================================
+    document.getElementById('file-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const status = document.getElementById('upload-status');
+        if (file) {
+            status.innerHTML = `✅ Selected: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+            status.style.color = '#10b981';
+        } else {
+            status.innerHTML = 'No file selected';
+            status.style.color = '#94a3b8';
+        }
+    });
+
+    // =============================================================
+    // INIT
+    // =============================================================
     window.onload = function() {
         renderAudioCards('Arabic');
     };
